@@ -1,0 +1,230 @@
+;;;; projeto.lisp
+;;;; IA - Projeto #1
+;;;; Autor: Tiago Farinha (201802235), Francisco Moura (201802033)
+
+;;;; NOTA (IMPORTANTE!!!): PÔR A PASTA NA RAIZ DO C: PARA CONSEGUIR LÊR O FICHEIRO
+
+(defun menu-inicial()
+"Layout do menu inicial"
+  (format t "~%")
+  (format t " __________________________________________~%")
+  (format t "|              Blokus Uno                  |~%")
+  (format t "|                                          |~%")
+  (format t "|           1 - Resolver problemas         |~%")
+  (format t "|           2 - Ver Tabuleiros             |~%")
+  (format t "|           0 - Sair                       |~%")
+  (format t "|__________________________________________|~%")
+  (format t "~%> ")
+  ;Impede que esta função retorne NIL.
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun menu-escolha-algoritmo()
+"Layout do sub-menu de escolha do algoritmo de procura"
+  (format t "~%")
+  (format t " _____________________________________~%")
+  (format t "|            Blokus Uno               |~%")
+  (format t "|                                     |~%")
+  (format t "|       Escolha um algoritmo:         |~%")
+  (format t "|           1 - BFS                   |~%")
+  (format t "|           2 - DFS                   |~%")
+  (format t "|           3 - DFS (modificado)      |~%")
+  (format t "|           0 - Voltar                |~%")
+  (format t "|_____________________________________|~%")
+  (format t "~%> ")
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun menu-escolha-problema()
+"Layout do sub-menu de escolha do algoritmo de procura"
+  (format t "~%")
+  (format t " __________________________________~%")
+  (format t "|            Blokus Uno            |~%")
+  (format t "|                                  |~%")
+  (format t "|       Escolha um problema:       |~%")
+  (format t "|             1 - A                |~%")
+  (format t "|             2 - B                |~%")
+  (format t "|             3 - C                |~%")
+  (format t "|             4 - D                |~%")
+  (format t "|             5 - E                |~%")
+  (format t "|             6 - F                |~%")
+  (format t "|           0 - Voltar             |~%")
+  (format t "|__________________________________|~%")
+  (format t "~%> ")
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun iniciar()
+"Função que imprime o menu e espera pelo input do utilizador, redirecionando-o depois à 'página' seguinte"
+  (menu-inicial)
+  (let ((comando (read)))
+    (cond 
+      ((not (numberp comando)) (format t "Insira um número!~%") (iniciar))
+      ((= comando 0) t)
+      ((= comando 1) (executar-subcomando-problema))
+      ((= comando 2) (ver-tabuleiros-comando))
+      (t (format t "Comando Inválido! Insira 1 para resolver um problema ou 0 para sair da aplicação...~%") (iniciar))
+    )
+  )
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+(defun ler-ficheiro-problemas ()
+"Lê ficheiro problemas.dat e devolve lista com os desafios. PATH: C:\Projeto IA\problemas.dat"
+   (with-open-file (problemas (make-pathname :host "c" :directory '(:absolute "Projeto IA") :name "problemas" :type "dat") :if-does-not-exist nil)
+     (do ((lista nil (cons next lista)) (next (read problemas nil 'eof) (read problemas nil 'eof))) ((equal next 'eof) (reverse lista)))
+   )
+)
+
+(defun mostrar-tabuleiros ()
+"Layout do menu dos tabuleiros dos desafios."
+  (format t "~%")
+  (format t " ___________________________________~%")
+  (format t "|            Blokus Uno             |~%")
+  (format t "|                                   |~%")
+  (format t "|      Tabuleiros (Desafios):       |~%")
+  (format t "|                                   |~%")
+  (format t "|              |A|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (first (ler-ficheiro-problemas)))
+  (format t "|                                   |~%")
+  (format t "|              |B|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (second (ler-ficheiro-problemas)))
+  (format t "|                                   |~%")
+  (format t "|              |C|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (third (ler-ficheiro-problemas)))
+  (format t "|                                   |~%")
+  (format t "|              |D|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (fourth (ler-ficheiro-problemas)))
+  (format t "|                                   |~%")
+  (format t "|              |E|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (fifth (ler-ficheiro-problemas)))
+  (format t "|                                   |~%")
+  (format t "|              |F|                  |~%")
+  (mapcar #'(lambda (atual) (format t "|   ~a   |~%" atual)) (tabuleiro-vazio))
+  (format t "|                                   |~%")
+  (format t "|                                   |~%")
+  (format t "|           0 - Voltar              |~%")
+  (format t "|___________________________________|~%")
+  (format t "~%> ")
+  (values) 
+)
+
+(defun ver-tabuleiros-comando ()
+"Função que imprime o layout do menu dos tabuleiros dos desafios e que permite voltar ao menu inicial."
+  (mostrar-tabuleiros)
+  (let ((comando (read)))
+    (cond 
+      ((not (numberp comando)) (format t "~%Insira um número!~%") (ver-tabuleiros-comando))
+      ((= comando 0) (iniciar))
+      (t (format t "~%Comando Inválido! Insira 0 se deseja voltar ao menu inicial...~%") (ver-tabuleiros-comando))
+    )
+  )
+  (values) 
+)
+
+
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun executar-subcomando-problema ()
+"Função que imprime o sub-menu e espera pelo input do utilizador, redirecionando-o depois à 'página' seguinte"
+  (menu-escolha-problema)
+  (let ((comando (read)))
+    (cond 
+      ((not (numberp comando)) (format t "~%Insira um número!~%") (executar-subcomando-problema))
+      ((= comando 0) (iniciar))
+      ((= comando 1) (executar-subcomando-algoritmo (first (ler-ficheiro-problemas)) comando))  
+      ((= comando 2) (executar-subcomando-algoritmo (second (ler-ficheiro-problemas)) comando)) 
+      ((= comando 3) (executar-subcomando-algoritmo (third (ler-ficheiro-problemas)) comando))
+      ((= comando 4) (executar-subcomando-algoritmo (fourth (ler-ficheiro-problemas)) comando))
+      ((= comando 5) (executar-subcomando-algoritmo (fifth (ler-ficheiro-problemas)) comando))
+      ((= comando 6) (executar-subcomando-algoritmo (tabuleiro-vazio) comando)) 
+      (t (format t "~%Comando Inválido! Insira entre 1 e 6 para resolver um problema ou 0 para sair da aplicação...~%") (executar-subcomando-problema))
+    )
+  )
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun executar-subcomando-algoritmo (problema &optional numeroProblema)
+"Função que imprime o sub-menu e espera pelo input do utilizador, redirecionando-o depois à 'página' seguinte"
+  (menu-escolha-algoritmo)
+  (let ((comando (read)))
+    (cond 
+      ((not (numberp comando)) (format t "~%Insira um número!~%") (executar-subcomando-algoritmo problema))
+      ((= comando 0) (executar-subcomando-problema))
+      ((= comando 1) (let ((resultado (list (GET-INTERNAL-RUN-TIME) (bfs 'no-solucaop 'nos-possiveis-todas-pecas (list (cria-no problema '(10 10 15)))) (GET-INTERNAL-RUN-TIME) numeroProblema))) (progn (escrever-estatisticas resultado 'bfs) (iniciar)))) 
+      ((= comando 2) (executar-escolha-profundidade problema numeroProblema)) 
+      ((= comando 3) (let ((resultado (list (GET-INTERNAL-RUN-TIME) (dfs 'no-solucaop 'nos-possiveis-todas-pecas 100 (list (cria-no problema '(10 10 15)))) (GET-INTERNAL-RUN-TIME) numeroProblema))) (progn (escrever-estatisticas resultado 'dfs2) (iniciar))))
+      (t (format t "~%Comando Inválido! Insira 1 ou 2 para resolver o desafio com o respetivo algoritmo ou 0 para sair da aplicação...~%") (executar-subcomando-algoritmo problema))
+     )
+  )
+  (values) 
+)
+
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(defun executar-escolha-profundidade (problema &optional numeroProblema)
+"Função que devolve a profundidade inserida pelo utilizador."
+     (format t "Qual a profundidade limite (Insira 0 para voltar atrás)? ~%")
+     (format t "> ")
+     (let ((comando (read)))
+       (cond 
+        ((not (numberp comando)) (progn (format t "~%A profundidade tem de ser um NÚMERO (>= 1)...~%") (executar-escolha-profundidade problema)))
+        ((<= comando 0) (progn (format t "~%A profundidade tem de ser >= 1...~%") (executar-escolha-profundidade problema)))  
+        (t (let ((resultado (list (GET-INTERNAL-RUN-TIME) (dfs 'no-solucaop 'nos-possiveis-todas-pecas comando (list (cria-no problema '(10 10 15)))) (GET-INTERNAL-RUN-TIME) numeroProblema comando))) (progn (escrever-estatisticas resultado 'dfs) (iniciar))))
+       )
+     )
+  (values) 
+)
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; | ESTATÍSTICAS |
+
+(defun escrever-estatisticas (resultado algoritmo)
+"Função que escreve as estatistícas de desempenho da realização de um desafio com um algoritmo"
+  (let ((tempoInicio (first resultado))
+        (solucao (second resultado))
+        (tempoFim (third resultado))
+        (desafio (fourth resultado)))
+        
+          (with-open-file (ficheiro (make-pathname :host "c" :directory '(:absolute "Projeto IA") :name "estatisticas" :type "dat") :direction :output :if-exists :append :if-does-not-exist :create)
+             (progn 
+               (cond 
+                ((= desafio 1) (format ficheiro "~%| Resolução do Tabuleiro A |"))
+                ((= desafio 2) (format ficheiro "~%| Resolução do Tabuleiro B |"))
+                ((= desafio 3) (format ficheiro "~%| Resolução do Tabuleiro C |"))
+                ((= desafio 4) (format ficheiro "~%| Resolução do Tabuleiro D |"))
+                ((= desafio 5) (format ficheiro "~%| Resolução do Tabuleiro E |"))
+                ((= desafio 6) (format ficheiro "~%| Resolução do Tabuleiro F |"))
+                (t (format ficheiro "~%* Resolução do Tabuleiro N/A"))
+               )
+               (cond
+                ((equal algoritmo 'bfs) (format ficheiro "~%Algoritmo: Breadth-First Search (Largura)"))
+                ((equal algoritmo 'dfs) (format ficheiro "~%Algoritmo: Depth-First Search (Profundidade)"))
+                ((equal algoritmo 'dfs2) (format ficheiro "~%Algoritmo: Depth-First Search Modificado (Profundidade)")))
+               (format ficheiro "~%Número de nós gerados > ~a" (+ (second solucao) (third solucao)))
+               (format ficheiro "~%Número de nós expandidos > ~a" (second solucao))
+               (format ficheiro "~%Penetrância > ~10f" (/ (no-profundidade (first solucao)) (+ (second solucao) (third solucao))))
+               (if (equal algoritmo 'dfs)
+                    (format ficheiro "~%Profundidade escolhida > ~a" (fifth resultado))
+               )
+               (format ficheiro "~%Tempo de Execução > ~a ms" (- tempoFim tempoInicio))
+               (format ficheiro "~%Caminho até ao fim do jogo:~%~%")
+               (formatar-solucao-ficheiro (solucaoProblema (first solucao)) ficheiro)
+           )
+         )
+  )
+)

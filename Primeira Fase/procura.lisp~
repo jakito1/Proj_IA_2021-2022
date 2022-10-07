@@ -1,0 +1,171 @@
+;;;; procura.lisp
+;;;; IA - Projeto #1
+;;;; Autor: Tiago Farinha (201802235), Francisco Moura (201802033)
+
+;;;; NOTA (IMPORTANTE!!!): PÔR A PASTA NA RAIZ DO C: PARA CONSEGUIR LÊR O FICHEIRO
+
+; ______________
+;|              |
+;|  ALGORITMOS  |
+;|______________|
+
+
+(defun bfs (funFimDoJogo funSucessores abertos &optional (fechados '()))
+"Implementação do Algoritmo Breadth-First Search"
+  (if (equal (length abertos) 0) 
+    nil
+    (let ((n (push (pop abertos) fechados)))
+      (let ((filhos (funcall funSucessores (first n)))) 
+          (if (equal (funcall funFimDoJogo (first n)) t) (progn (formatar-solucao (solucaoProblema (first n))) (list (first n) (length abertos) (length fechados))) (bfs funFimDoJogo funSucessores (nconc abertos filhos) fechados))
+        )
+    )
+  )
+)
+
+(defun dfs (funFimDoJogo funSucessores profMax abertos &optional (fechados '()))
+"Implementação do Algoritmo Depth-First Search"
+  (if (equal (length abertos) 0) 
+    nil
+    (let ((n (push (pop abertos) fechados)))
+      (let ((filhos (funcall funSucessores (first n)))) 
+        (if (equal profMax (no-profundidade (first n)))
+          (dfs  funFimDoJogo funSucessores profMax abertos fechados)
+          (if (equal (funcall funFimDoJogo (first n)) t) (progn (formatar-solucao (solucaoProblema (first n))) (list (first n) (length abertos) (length fechados))) (dfs funFimDoJogo funSucessores profMax (nconc filhos abertos) fechados)
+          )
+        )
+      )
+    )
+  )
+)
+
+;----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; ___________
+;|           |
+;|  SOLUÇÃO  |
+;|___________|
+
+
+(defun solucaoProblema (noSolucao)
+"Função que retorna a lista do caminho da solução."
+  (cond 
+   ((equal (no-pai noSolucao) nil) (list (first noSolucao)))
+   (t (append (solucao (no-pai noSolucao)) (list (first noSolucao))))
+ )
+)
+
+(defun formatar-solucao (solucao)
+"Formata o caminho solução em forma de tabuleiros."
+  (if (not (equal solucao nil))
+    (progn (format t " _____________________________________~%") 
+           (format t "|                                     |~%")
+           (format t "|      A B C D E F G H I J K L M N    |")
+           (format t "~%")
+           (let ((linha 0))
+           (mapcar #'(lambda (atual) (progn (setf linha (1+ linha)) 
+                                            (if (< linha 10) (format t "|   ~a ~a   |~%" linha atual) 
+                                            (format t "|  ~a ~a   |~%" linha atual)))) (first solucao))) 
+           (format t "|_____________________________________|~%")
+           (format t "~%") (formatar-solucao (rest solucao)) 
+           (values))
+  )
+)
+
+
+(defun formatar-solucao-ficheiro (solucao ficheiro)
+"Formata o caminho solução em forma de tabuleiros para um ficheiro."
+  (if (not (equal solucao nil))
+    (progn (format ficheiro " _____________________________________~%") 
+           (format ficheiro "|                                     |~%")
+           (format ficheiro "|      A B C D E F G H I J K L M N    |")
+           (format ficheiro "~%")
+           (let ((linha 0))
+           (mapcar #'(lambda (atual) (progn (setf linha (1+ linha)) 
+                                            (if (< linha 10) (format ficheiro "|   ~a ~a   |~%" linha atual) 
+                                            (format ficheiro "|  ~a ~a   |~%" linha atual)))) (first solucao))) 
+           (format ficheiro "|_____________________________________|~%")
+           (format ficheiro "~%") (formatar-solucao2 (rest solucao) ficheiro))
+  )
+)
+
+;-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+; ______________________________________
+;|                                      |
+;|  NÓS E INTERAÇÕES COM OS ALGORITMOS  |
+;|______________________________________|
+
+
+(defun cria-no (tray nrPecas &optional (prof 0) (pai nil))
+"Cria a estrutura do nó"
+  (list tray prof pai nrPecas)
+)
+
+(defun no-estado (no)
+"Devolve o tabuleiro atual"
+  (first no)
+)
+
+(defun no-profundidade (no)
+"Devolve o nível de profundidade no grafo"
+  (second no)
+)
+
+(defun no-pai (no)
+"Devolve o pai do nó atual"
+  (third no)
+)
+
+(defun nr-pecas (no)
+"Devolve a lista com a quantidade de peças"
+  (fourth no)
+)
+
+(defun no-solucaop (no)
+"Função que retorna t se o nó recebido por parâmetro é nó solução. Nil caso contrário."
+  (if (equal (length (nos-possiveis-todas-pecas  no)) 0) t nil)
+)
+
+(defun nos-possiveis-todas-pecas (no)
+"Devolve todos os nós sucessores de nó"
+  (append (nos-posicoes-possiveis no 'peca-a) (nos-posicoes-possiveis no 'peca-b) (nos-posicoes-possiveis no 'peca-c-1) (nos-posicoes-possiveis no 'peca-c-2))
+)
+
+(defun nos-posicoes-possiveis(no peca)
+"Funçãoo que verifica e coloca as jogadas possíveis (em nós - (cria-no no)) numa lista a ser usada, mais tarde, nos algoritmos."
+	(if (> (cond 
+                ((equal peca 'peca-a) (first (nr-pecas no)))
+                ((equal peca 'peca-b) (second (nr-pecas no)))
+                ((or (equal peca 'peca-c-1) (equal peca 'peca-c-2)) (third (nr-pecas no)))) 0)
+            
+		(mapcar #'(lambda(sucessorAtual)
+                            (cria-no sucessorAtual (decrementar-nr-pecas peca (nr-pecas no)) (1+ (no-profundidade no)) no)    
+                           )
+                 (mapcar #'(lambda(coordAtual)
+                             (verificar-peca-encaixa-e-colocar  (first coordAtual) (second coordAtual) peca (no-estado no)))
+                  (sucessores (no-estado no) 0 0 peca))
+		)
+               nil)
+)
+
+(defun sucessores (tray line row peca &optional (listaSucessores '()))
+"Devolve a lista de sucessores de um nó"
+  (if (equal (verificar-dentro-dos-limites line row) nil) 
+      (reverse listaSucessores)
+      (if (equal (verificar-peca-encaixa line row peca tray) t) 
+          (if (> row 12) (sucessores tray (1+ line) 0 peca (append (list (list line row)) listaSucessores )) (sucessores tray line (1+ row) peca (append (list (list line row)) listaSucessores)))
+          (if (> row 12) (sucessores tray (1+ line) 0 peca listaSucessores ) (sucessores tray line (1+ row) peca listaSucessores))
+      )
+  )
+)
+
+
+
+(defun decrementar-nr-pecas (peca nrPecas)
+"Decrementa o numero de um peça"
+  (cond 
+   ((equal peca 'peca-a) (list (1- (first nrPecas)) (second nrPecas) (third nrPecas)))
+   ((equal peca 'peca-b) (list (first nrPecas) (1- (second nrPecas)) (third nrPecas)))
+   ((or (equal peca 'peca-c-1) (equal peca 'peca-c-2)) (list (first nrPecas) (second nrPecas) (1- (third nrPecas))))
+  )
+)
